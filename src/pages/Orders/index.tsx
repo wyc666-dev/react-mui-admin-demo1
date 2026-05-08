@@ -1,5 +1,5 @@
+import GetOrder from "@/api/orders";
 import { useTableData } from "@/hooks/useTableData";
-import { fakerZH_CN as faker } from "@faker-js/faker";
 import {
   Box,
   Button,
@@ -17,7 +17,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import OrderModal from "./components/OrderModal";
 import type { Order } from "./type";
 
@@ -30,19 +30,17 @@ const statusColorMap = {
   已完成: "success",
 } as const;
 
-const generateOrders = (count: number): Order[] => {
-  return Array.from({ length: count }, (_, index) => ({
-    id: index + 1,
-    orderId: faker.number.int({ min: 10000000, max: 99999999 }),
-    customerName: faker.person.fullName(),
-    product: faker.commerce.productName(),
-    amount: faker.number.float({ min: 10, max: 9999, fractionDigits: 2 }),
-    status: faker.helpers.arrayElement(statusOptions),
-    createdAt: faker.date.recent({ days: 30 }).toISOString().slice(0, 10),
-  }));
-};
-
-const initialRows = generateOrders(50);
+// const generateOrders = (count: number): Order[] => {
+//   return Array.from({ length: count }, (_, index) => ({
+//     id: index + 1,
+//     orderId: faker.number.int({ min: 10000000, max: 99999999 }),
+//     customerName: faker.person.fullName(),
+//     product: faker.commerce.productName(),
+//     amount: faker.number.float({ min: 10, max: 9999, fractionDigits: 2 }),
+//     status: faker.helpers.arrayElement(statusOptions),
+//     createdAt: faker.date.recent({ days: 30 }).toISOString().slice(0, 10),
+//   }));
+// };
 
 const headerCellSx = {
   fontWeight: 700,
@@ -62,14 +60,10 @@ const hoverRowSx = {
   },
 };
 
-const Orders: React.FC = () => {
+const Orders = () => {
   const {
-    paginatedRows,
-    filteredRows,
-    searchQuery,
-    handleSearchChange,
-    handleSearchClick,
-    handleKeyDown,
+    setRows,
+    rows,
     page,
     rowsPerPage,
     handleChangePage,
@@ -81,13 +75,58 @@ const Orders: React.FC = () => {
     modalOpen,
     setModalOpen,
     editRow: editOrder,
-  } = useTableData<Order>(initialRows, "orderId");
+  } = useTableData<Order>([], "orderId");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [appliedQuery, setAppliedQuery] = useState("");
+
+  useEffect(() => {
+    GetOrder().then((data) => {
+      setRows(Array.isArray(data.list) ? data.list : []);
+    });
+  }, [setRows]);
 
   const [statusFilter, setStatusFilter] = useState<"全部" | Order["status"]>(
     "全部",
   );
 
-  const statusFilteredRows = filteredRows.filter((order) => {
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value;
+    setSearchQuery(value);
+
+    if (value === "") {
+      setAppliedQuery("");
+      handleChangePage(null, 0);
+    }
+  };
+
+  const handleSearchClick = () => {
+    setAppliedQuery(searchQuery);
+    handleChangePage(null, 0);
+  };
+
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === "Enter") {
+      handleSearchClick();
+    }
+  };
+
+  const normalizedQuery = appliedQuery.trim().replace(/^#/, "").toLowerCase();
+  const searchedRows = rows.filter((order) => {
+    if (!normalizedQuery) {
+      return true;
+    }
+
+    return [
+      order.orderId,
+      order.customerName,
+      order.product,
+      order.amount,
+      order.status,
+      order.createdAt,
+    ].some((value) => String(value).toLowerCase().includes(normalizedQuery));
+  });
+
+  const statusFilteredRows = searchedRows.filter((order) => {
     if (statusFilter === "全部") {
       return true;
     }
@@ -123,7 +162,7 @@ const Orders: React.FC = () => {
         <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
           <TextField
             size="small"
-            label="搜索订单ID"
+            label="搜索订单号/客户/商品"
             variant="outlined"
             value={searchQuery}
             onChange={handleSearchChange}
@@ -232,11 +271,11 @@ const Orders: React.FC = () => {
               </TableRow>
             ))}
 
-            {paginatedRows.length === 0 && (
+            {statusPaginatedRows.length === 0 && (
               <TableRow>
                 <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
                   <Typography color="text.secondary">
-                    没有找到匹配的订单
+                    暂无相关数据
                   </Typography>
                 </TableCell>
               </TableRow>

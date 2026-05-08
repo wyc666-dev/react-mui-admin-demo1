@@ -98,6 +98,7 @@ export const useTableData = <T extends { id: number }>(
   };
 
   return {
+    setRows,
     rows,
     paginatedRows,
     filteredRows,

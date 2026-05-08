@@ -1,5 +1,5 @@
+import GetProduct from "@/api/products";
 import { useTableData } from "@/hooks/useTableData";
-import { fakerZH_CN as faker } from "@faker-js/faker";
 import {
   Avatar,
   Box,
@@ -17,23 +17,20 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import { useEffect } from "react";
 import ProductModal from "./components/ProductModal";
 import type { Product } from "./type";
 
-const categoryOptions = ["手机", "电脑", "服饰", "食品", "家居"];
-
-const generateProducts = (count: number): Product[] => {
-  return Array.from({ length: count }, (_, index) => ({
-    id: index + 1,
-    name: faker.commerce.productName(),
-    price: Number(faker.commerce.price({ min: 20, max: 9999, dec: 2 })),
-    stock: faker.number.int({ min: 0, max: 300 }),
-    category: faker.helpers.arrayElement(categoryOptions),
-    image: `https://picsum.photos/seed/product-${index + 1}/120/120`,
-  }));
-};
-
-const initialRows = generateProducts(50);
+// const generateProducts = (count: number): Product[] => {
+//   return Array.from({ length: count }, (_, index) => ({
+//     id: index + 1,
+//     name: faker.commerce.productName(),
+//     price: Number(faker.commerce.price({ min: 20, max: 9999, dec: 2 })),
+//     stock: faker.number.int({ min: 0, max: 300 }),
+//     category: faker.helpers.arrayElement(categoryOptions),
+//     image: `https://picsum.photos/seed/product-${index + 1}/120/120`,
+//   }));
+// };
 
 const Products = () => {
   const {
@@ -45,6 +42,7 @@ const Products = () => {
     handleKeyDown,
     page,
     rowsPerPage,
+    setRows,
     handleChangePage,
     handleChangeRowsPerPage,
     handleAdd,
@@ -54,7 +52,13 @@ const Products = () => {
     modalOpen,
     setModalOpen,
     editRow: editProduct,
-  } = useTableData<Product>(initialRows, "name");
+  } = useTableData<Product>([], "name");
+
+  useEffect(() => {
+    GetProduct().then((data) => {
+      setRows(Array.isArray(data.list) ? data.list : []);
+    });
+  }, [setRows]);
 
   return (
     <Box sx={{ p: 3 }}>

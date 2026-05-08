@@ -1,7 +1,7 @@
 import axios from "axios";
 
 export const http = axios.create({
-  baseURL: "api",
+  baseURL: "/api",
   timeout: 5000,
 });
 http.interceptors.request.use((config) => {
