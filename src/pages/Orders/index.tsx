@@ -1,4 +1,4 @@
-import GetOrder from "@/api/orders";
+import { AddOrder, DeleteOrder, GetOrder, UpdateOrder } from "@/api/orders";
 import { useTableData } from "@/hooks/useTableData";
 import {
   Box,
@@ -17,6 +17,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import OrderModal from "./components/OrderModal";
 import type { Order } from "./type";
@@ -69,21 +70,12 @@ const Orders = () => {
     handleChangePage,
     handleChangeRowsPerPage,
     handleAdd,
-    handleEdit,
-    handleDelete,
-    handleSubmit,
     modalOpen,
     setModalOpen,
     editRow: editOrder,
   } = useTableData<Order>([], "orderId");
   const [searchQuery, setSearchQuery] = useState("");
   const [appliedQuery, setAppliedQuery] = useState("");
-
-  useEffect(() => {
-    GetOrder().then((data) => {
-      setRows(Array.isArray(data.list) ? data.list : []);
-    });
-  }, [setRows]);
 
   const [statusFilter, setStatusFilter] = useState<"全部" | Order["status"]>(
     "全部",
@@ -109,6 +101,7 @@ const Orders = () => {
       handleSearchClick();
     }
   };
+  const queryClient = useQueryClient();
 
   const normalizedQuery = appliedQuery.trim().replace(/^#/, "").toLowerCase();
   const searchedRows = rows.filter((order) => {
@@ -138,6 +131,34 @@ const Orders = () => {
     page * rowsPerPage,
     page * rowsPerPage + rowsPerPage,
   );
+
+  const { data } = useQuery({
+    queryKey: ["orders"],
+    queryFn: GetOrder,
+  });
+  const { mutate } = useMutation({
+    mutationFn: DeleteOrder, // 填什么？
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+    },
+  });
+  useEffect(() => {
+    if (data?.list) setRows(data.list);
+  }, [data, setRows]);
+
+  const { mutate: addOrder } = useMutation({
+    mutationFn: AddOrder, // 填什么？
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+    },
+  });
+
+  const { mutate: updateOrder } = useMutation({
+    mutationFn: UpdateOrder, // 填什么？
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+    },
+  });
 
   return (
     <Box sx={{ p: 3 }}>
@@ -256,13 +277,13 @@ const Orders = () => {
                     spacing={1}
                     sx={{ justifyContent: "center" }}
                   >
-                    <Button size="small" onClick={() => handleEdit(order)}>
+                    <Button size="small" onClick={() => updateOrder(order)}>
                       编辑
                     </Button>
                     <Button
                       size="small"
                       color="error"
-                      onClick={() => handleDelete(order.id)}
+                      onClick={() => mutate(order.id)}
                     >
                       删除
                     </Button>
@@ -274,9 +295,7 @@ const Orders = () => {
             {statusPaginatedRows.length === 0 && (
               <TableRow>
                 <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
-                  <Typography color="text.secondary">
-                    暂无相关数据
-                  </Typography>
+                  <Typography color="text.secondary">暂无相关数据</Typography>
                 </TableCell>
               </TableRow>
             )}
@@ -300,7 +319,13 @@ const Orders = () => {
           key={editOrder?.orderId || "new"}
           onClose={() => setModalOpen(false)}
           initialData={editOrder}
-          onSubmit={handleSubmit}
+          onSubmit={(data) => {
+            if (editOrder) {
+              updateOrder(data);
+            } else {
+              addOrder(data);
+            }
+          }}
         />
       )}
     </Box>

@@ -1,8 +1,21 @@
+import type { Order } from "@/pages/Orders/type";
 import { http } from "./http";
 
-const GetOrder = async () => {
+export const GetOrder = async () => {
   const response = await http.get("orders");
   return response.data;
 };
+export const DeleteOrder = async (id: number) => {
+  const response = await http.delete(`orders/${id}`);
+  return response.data;
+};
 
-export default GetOrder;
+export const AddOrder = async (order: Order) => {
+  const response = await http.post("orders", order);
+  return response.data;
+};
+
+export const UpdateOrder = async (order: Order) => {
+  const response = await http.put(`orders/${order.id}`, order);
+  return response.data;
+};

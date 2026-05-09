@@ -24,3 +24,5 @@ dist-ssr
 *.sw?
 .aider*
 .vite/
+.claude/
+.env.local

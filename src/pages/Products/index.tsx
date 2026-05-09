@@ -1,4 +1,9 @@
-import GetProduct from "@/api/products";
+import {
+  AddProduct,
+  DeleteProduct,
+  GetProduct,
+  UpdateProduct,
+} from "@/api/products";
 import { useTableData } from "@/hooks/useTableData";
 import {
   Avatar,
@@ -17,6 +22,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import ProductModal from "./components/ProductModal";
 import type { Product } from "./type";
@@ -42,23 +48,46 @@ const Products = () => {
     handleKeyDown,
     page,
     rowsPerPage,
+    handleAdd,
+    handleEdit,
     setRows,
     handleChangePage,
     handleChangeRowsPerPage,
-    handleAdd,
-    handleEdit,
-    handleDelete,
-    handleSubmit,
     modalOpen,
     setModalOpen,
     editRow: editProduct,
   } = useTableData<Product>([], "name");
 
+  const queryClient = useQueryClient();
+
+  const { data } = useQuery({
+    queryKey: ["products"],
+    queryFn: GetProduct,
+  });
+
   useEffect(() => {
-    GetProduct().then((data) => {
-      setRows(Array.isArray(data.list) ? data.list : []);
-    });
-  }, [setRows]);
+    if (data?.list) setRows(data.list);
+  }, [data, setRows]);
+
+  const { mutate } = useMutation({
+    mutationFn: DeleteProduct, // 填什么？
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+    },
+  });
+  const { mutate: addProduct } = useMutation({
+    mutationFn: AddProduct, // 填什么？
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+    },
+  });
+
+  const { mutate: updateProduct } = useMutation({
+    mutationFn: UpdateProduct, // 填什么？
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+    },
+  });
 
   return (
     <Box sx={{ p: 3 }}>
@@ -146,7 +175,7 @@ const Products = () => {
                   <Button
                     size="small"
                     color="error"
-                    onClick={() => handleDelete(product.id)}
+                    onClick={() => mutate(product.id)}
                   >
                     删除
                   </Button>
@@ -172,7 +201,13 @@ const Products = () => {
         <ProductModal
           key={editProduct?.id || "new"}
           onClose={() => setModalOpen(false)}
-          onSubmit={handleSubmit}
+          onSubmit={(data) => {
+            if (editProduct) {
+              updateProduct(data);
+            } else {
+              addProduct(data);
+            }
+          }}
           initialData={editProduct}
         />
       )}
