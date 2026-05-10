@@ -33,7 +33,7 @@ const OrderModal = ({ onClose, onSubmit, initialData }: OrderModalProps) => {
       orderId: initialData?.orderId === "" ? undefined : initialData?.orderId,
       customerName: initialData?.customerName || "",
       amount: initialData?.amount === "" ? undefined : initialData?.amount,
-      status: initialData?.status || "" as any,
+      status: initialData?.status || undefined,
       createdAt: initialData?.createdAt || "",
       product: initialData?.product || "",
     },

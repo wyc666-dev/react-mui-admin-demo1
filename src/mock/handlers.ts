@@ -4,7 +4,7 @@ export const handlers = [
   // 导出接口拦截列表，给 browser.ts 使用。
   http.post("/api/login", async ({ request }) => {
     // 拦截登录接口 api/login。
-    const { userName, password } = (await request.json()) as any;
+    const { userName, password } = (await request.json()) as { userName: string; password: string };
 
     if (userName === "wyc666" && password === "20020911") {
       return HttpResponse.json({

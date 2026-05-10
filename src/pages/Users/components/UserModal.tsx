@@ -35,7 +35,7 @@ const UserModal = ({ onClose, onSubmit, initialData }: UserModalProps) => {
     defaultValues: {
       name: initialData?.name || "",
       age: initialData?.age === "" ? undefined : initialData?.age,
-      gender: initialData?.gender || "" as any,
+      gender: initialData?.gender || undefined,
       address: initialData?.address || "",
     },
   });
