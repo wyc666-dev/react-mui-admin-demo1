@@ -31,18 +31,6 @@ const statusColorMap = {
   已完成: "success",
 } as const;
 
-// const generateOrders = (count: number): Order[] => {
-//   return Array.from({ length: count }, (_, index) => ({
-//     id: index + 1,
-//     orderId: faker.number.int({ min: 10000000, max: 99999999 }),
-//     customerName: faker.person.fullName(),
-//     product: faker.commerce.productName(),
-//     amount: faker.number.float({ min: 10, max: 9999, fractionDigits: 2 }),
-//     status: faker.helpers.arrayElement(statusOptions),
-//     createdAt: faker.date.recent({ days: 30 }).toISOString().slice(0, 10),
-//   }));
-// };
-
 const headerCellSx = {
   fontWeight: 700,
   fontSize: 16,

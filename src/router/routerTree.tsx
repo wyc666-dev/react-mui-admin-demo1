@@ -8,11 +8,16 @@ import Profile from "@/pages/Profile";
 import Settings from "@/pages/Settings";
 import Users from "@/pages/Users";
 import { createBrowserRouter, Navigate } from "react-router-dom";
+import GuestGuard from "./GuestGuard";
 
 const routeConfig = [
   {
     path: "/login",
-    element: <Login />,
+    element: (
+      <GuestGuard>
+        <Login />
+      </GuestGuard>
+    ),
   },
   {
     path: "/",

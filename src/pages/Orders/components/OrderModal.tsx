@@ -1,4 +1,6 @@
 import type { Order } from "@/pages/Orders/type";
+import { orderSchema, type OrderFormData } from "@/schemas/orderSchema";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Button,
   Dialog,
@@ -10,7 +12,7 @@ import {
   Stack,
   TextField,
 } from "@mui/material";
-import { useState } from "react";
+import { useForm } from "react-hook-form";
 
 interface OrderModalProps {
   onClose: () => void;
@@ -20,18 +22,30 @@ interface OrderModalProps {
 
 const statusOptions = ["待付款", "已付款", "已发货", "已完成"] as const;
 
-const emptyOrder: Order = {
-  id: 0,
-  orderId: "",
-  customerName: "",
-  amount: "",
-  status: "",
-  createdAt: "",
-  product: "",
-};
-
 const OrderModal = ({ onClose, onSubmit, initialData }: OrderModalProps) => {
-  const [formData, setFormData] = useState<Order>(initialData || emptyOrder);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<OrderFormData>({
+    resolver: zodResolver(orderSchema),
+    defaultValues: {
+      orderId: initialData?.orderId === "" ? undefined : initialData?.orderId,
+      customerName: initialData?.customerName || "",
+      amount: initialData?.amount === "" ? undefined : initialData?.amount,
+      status: initialData?.status || "" as any,
+      createdAt: initialData?.createdAt || "",
+      product: initialData?.product || "",
+    },
+  });
+
+  const onFormSubmit = (data: OrderFormData) => {
+    onSubmit({
+      ...initialData,
+      ...data,
+      id: initialData?.id || 0,
+    } as Order);
+  };
 
   return (
     <Dialog open={true} onClose={onClose} fullWidth maxWidth="sm">
@@ -44,31 +58,25 @@ const OrderModal = ({ onClose, onSubmit, initialData }: OrderModalProps) => {
               label="订单号"
               type="number"
               fullWidth
-              value={formData.orderId}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  orderId: e.target.value === "" ? "" : Number(e.target.value),
-                })
-              }
+              {...register("orderId", { valueAsNumber: true })}
+              error={!!errors.orderId}
+              helperText={errors.orderId?.message}
             />
             <TextField
               label="客户姓名"
               fullWidth
-              value={formData.customerName}
-              onChange={(e) =>
-                setFormData({ ...formData, customerName: e.target.value })
-              }
+              {...register("customerName")}
+              error={!!errors.customerName}
+              helperText={errors.customerName?.message}
             />
           </Stack>
 
           <TextField
             label="商品名称"
             fullWidth
-            value={formData.product}
-            onChange={(e) =>
-              setFormData({ ...formData, product: e.target.value })
-            }
+            {...register("product")}
+            error={!!errors.product}
+            helperText={errors.product?.message}
           />
 
           <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
@@ -76,7 +84,6 @@ const OrderModal = ({ onClose, onSubmit, initialData }: OrderModalProps) => {
               label="订单金额"
               type="number"
               fullWidth
-              value={formData.amount}
               slotProps={{
                 input: {
                   startAdornment: (
@@ -84,24 +91,18 @@ const OrderModal = ({ onClose, onSubmit, initialData }: OrderModalProps) => {
                   ),
                 },
               }}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  amount: e.target.value === "" ? "" : Number(e.target.value),
-                })
-              }
+              {...register("amount", { valueAsNumber: true })}
+              error={!!errors.amount}
+              helperText={errors.amount?.message}
             />
             <TextField
               select
               label="订单状态"
               fullWidth
-              value={formData.status}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  status: e.target.value as Order["status"],
-                })
-              }
+              defaultValue={initialData?.status || ""}
+              {...register("status")}
+              error={!!errors.status}
+              helperText={errors.status?.message}
             >
               <MenuItem value="">
                 <em>-- 请选择状态 --</em>
@@ -118,18 +119,17 @@ const OrderModal = ({ onClose, onSubmit, initialData }: OrderModalProps) => {
             label="创建时间"
             type="date"
             fullWidth
-            value={formData.createdAt}
             slotProps={{ inputLabel: { shrink: true } }}
-            onChange={(e) =>
-              setFormData({ ...formData, createdAt: e.target.value })
-            }
+            {...register("createdAt")}
+            error={!!errors.createdAt}
+            helperText={errors.createdAt?.message}
           />
         </Stack>
       </DialogContent>
 
       <DialogActions>
         <Button onClick={onClose}>取消</Button>
-        <Button variant="contained" onClick={() => onSubmit(formData)}>
+        <Button variant="contained" onClick={handleSubmit(onFormSubmit)}>
           保存
         </Button>
       </DialogActions>

@@ -1,4 +1,6 @@
 import type { Product } from "@/pages/Products/type";
+import { productSchema, type ProductFormData } from "@/schemas/productSchema";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Box,
   Button,
@@ -11,7 +13,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { useState } from "react";
+import { useForm } from "react-hook-form";
 
 interface ProductModalProps {
   onClose: () => void;
@@ -21,36 +23,48 @@ interface ProductModalProps {
 
 const categoryOptions = ["手机", "电脑", "服饰", "食品", "家居"];
 
-const emptyProduct: Product = {
-  id: 0,
-  name: "",
-  price: "",
-  stock: "",
-  category: "",
-  image: "",
-};
-
 const ProductModal = ({
   onClose,
   onSubmit,
   initialData,
 }: ProductModalProps) => {
-  const [formData, setFormData] = useState<Product>(
-    initialData || emptyProduct,
-  );
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useForm<ProductFormData>({
+    resolver: zodResolver(productSchema),
+    defaultValues: {
+      name: initialData?.name || "",
+      category: initialData?.category || "",
+      price: initialData?.price === "" ? undefined : initialData?.price,
+      stock: initialData?.stock === "" ? undefined : initialData?.stock,
+      image: initialData?.image || "",
+    },
+  });
+
+  const productImage = watch("image");
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-
-    if (!file) {
-      return;
-    }
+    if (!file) return;
 
     const reader = new FileReader();
     reader.onload = () => {
-      setFormData({ ...formData, image: String(reader.result) });
+      setValue("image", String(reader.result));
     };
     reader.readAsDataURL(file);
+  };
+
+  const onFormSubmit = (data: ProductFormData) => {
+    onSubmit({
+      ...initialData,
+      ...data,
+      id: initialData?.id || 0,
+      image: data.image || "",
+    } as Product);
   };
 
   return (
@@ -64,20 +78,19 @@ const ProductModal = ({
           <TextField
             label="商品名称"
             fullWidth
-            value={formData.name}
-            onChange={(e) =>
-              setFormData({ ...formData, name: e.target.value })
-            }
+            {...register("name")}
+            error={!!errors.name}
+            helperText={errors.name?.message}
           />
 
           <TextField
             select
             label="商品分类"
             fullWidth
-            value={formData.category}
-            onChange={(e) =>
-              setFormData({ ...formData, category: e.target.value })
-            }
+            defaultValue={initialData?.category || ""}
+            {...register("category")}
+            error={!!errors.category}
+            helperText={errors.category?.message}
           >
             <MenuItem value="">
               <em>-- 请选择分类 --</em>
@@ -94,43 +107,34 @@ const ProductModal = ({
               label="价格"
               type="number"
               fullWidth
-              value={formData.price}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  price: e.target.value === "" ? "" : Number(e.target.value),
-                })
-              }
+              {...register("price", { valueAsNumber: true })}
+              error={!!errors.price}
+              helperText={errors.price?.message}
             />
             <TextField
               label="库存"
               type="number"
               fullWidth
-              value={formData.stock}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  stock: e.target.value === "" ? "" : Number(e.target.value),
-                })
-              }
+              {...register("stock", { valueAsNumber: true })}
+              error={!!errors.stock}
+              helperText={errors.stock?.message}
             />
           </Stack>
 
           <Box
             sx={{
               border: "1px dashed",
-              borderColor: "divider",
+              borderColor: errors.image ? "error.main" : "divider",
               borderRadius: 2,
               p: 2,
             }}
           >
             <Stack spacing={1.5}>
               <Typography variant="subtitle2">商品图片</Typography>
-              {formData.image ? (
+              {productImage ? (
                 <Box
                   component="img"
-                  src={formData.image}
-                  alt={formData.name || "商品图片"}
+                  src={productImage}
                   sx={{
                     display: "block",
                     width: "100%",
@@ -155,7 +159,7 @@ const ProductModal = ({
               )}
 
               <Button variant="outlined" component="label">
-                {formData.image ? "更换图片" : "上传图片"}
+                {productImage ? "更换图片" : "上传图片"}
                 <input
                   hidden
                   accept="image/*"
@@ -170,7 +174,7 @@ const ProductModal = ({
 
       <DialogActions>
         <Button onClick={onClose}>取消</Button>
-        <Button variant="contained" onClick={() => onSubmit(formData)}>
+        <Button variant="contained" onClick={handleSubmit(onFormSubmit)}>
           保存
         </Button>
       </DialogActions>

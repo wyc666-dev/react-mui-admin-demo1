@@ -26,7 +26,7 @@ const Profile = () => {
     };
 
   const handleSubmit = () => {
-    console.log("提交表单", form);
+    // 提交逻辑
   };
 
   return (

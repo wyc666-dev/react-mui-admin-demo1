@@ -39,7 +39,14 @@ export default function Header() {
         onClose={() => setAnchorEl(null)}
       >
         <MenuItem onClick={() => navigate("/profile")}>个人中心</MenuItem>
-        <MenuItem>注销</MenuItem>
+        <MenuItem
+          onClick={() => {
+            localStorage.removeItem("token");
+            navigate("/login");
+          }}
+        >
+          注销
+        </MenuItem>
       </Menu>
     </AppBar>
   );

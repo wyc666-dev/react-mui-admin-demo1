@@ -27,17 +27,6 @@ import { useEffect } from "react";
 import ProductModal from "./components/ProductModal";
 import type { Product } from "./type";
 
-// const generateProducts = (count: number): Product[] => {
-//   return Array.from({ length: count }, (_, index) => ({
-//     id: index + 1,
-//     name: faker.commerce.productName(),
-//     price: Number(faker.commerce.price({ min: 20, max: 9999, dec: 2 })),
-//     stock: faker.number.int({ min: 0, max: 300 }),
-//     category: faker.helpers.arrayElement(categoryOptions),
-//     image: `https://picsum.photos/seed/product-${index + 1}/120/120`,
-//   }));
-// };
-
 const Products = () => {
   const {
     paginatedRows,
